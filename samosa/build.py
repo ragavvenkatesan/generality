@@ -113,9 +113,9 @@ class network(object):
 
         
     # define the optimzer function 
-    def build_network (self, arch_params, optimization_params , init_params = None, verbose = True):    
+    def build_network (self, arch_params, optimization_params , retrain_params = None, init_params = None, verbose = True):    
     
-        self.optim_params                    = optimization_params
+        self.optim_params                    = optimization_params 
         self.mom_start                       = optimization_params [ "mom_start" ]
         self.mom_end                         = optimization_params [ "mom_end" ]
         self.mom_epoch_interval              = optimization_params [ "mom_interval" ]
@@ -154,7 +154,17 @@ class network(object):
         self.max_out                         = arch_params [ "max_out" ] 
         self.cnn_maxout                      = arch_params [ "cnn_maxout" ]   
         self.mlp_maxout                      = arch_params [ "mlp_maxout" ]
-                    
+                  
+        
+        if retrain_params is not None:
+            self.copy_from_old = retrain_params [ "copy_from_old" ]
+            self.freeze_layers = retrain_params [ "freeze" ]
+            
+        # if no retrain specified but if init params are given, make default as copy all params.             
+        if retrain_params is None and init_params is not None:
+            for i in xrange(len(self.nkerns) + len(self.num_nodes) + 1):
+                self.copy_from_old[i] = True 
+                                                      
         if self.ada_grad is True:
             assert self.rms_prop is False
         elif self.rms_prop is True:
@@ -190,6 +200,28 @@ class network(object):
             pool_size = self.pooling_size[0]
             stride    = self.conv_stride_size[0]
             batch_norm_layer = self.batch_norm[0]
+            
+            if retrain_params is not None:
+                curr_copy = self.copy_from_old[0] 
+                
+                if curr_copy is True:
+                    curr_init_weights = init_params[0]
+                    curr_init_bias    = init_params[1]
+                    
+                    if batch_norm_layer is True:
+                        curr_init_alpha    = init_params[2]
+                    else:
+                        curr_init_alpha    = None
+                else:
+                    curr_init_weights = None
+                    curr_init_bias = None
+                    curr_init_alpha = None                    
+                    
+            if init_params is None:
+                curr_init_weights = None
+                curr_init_bias = None 
+                curr_init_alpha = None
+                
         if self.max_out > 0:     
             max_out_size = self.cnn_maxout[0]
         else: 
@@ -198,7 +230,7 @@ class network(object):
         next_in = [ self.height, self.width, self.channels ]
         stack_size = 1 
         param_counter = 0 
-
+ 
         if not self.nkerns == []:     
             if len(filt_size) == 2:                        
                 dropout_conv_layers.append ( 
@@ -212,10 +244,10 @@ class network(object):
                                         max_out = self.max_out,
                                         maxout_size = max_out_size,
                                         activation = self.cnn_activations[0],
-                                        W = None if init_params is None else init_params[param_counter],
-                                        b = None if init_params is None else init_params[param_counter + 1], 
+                                        W = None if curr_init_weights is None else curr_init_weights,
+                                        b = None if curr_init_bias is None else curr_init_bias, 
                                         batch_norm = batch_norm_layer,
-                                        alpha = None if init_params is None else init_params[param_counter + 2],
+                                        alpha = None if curr_init_alpha is None else curr_init_alpha,
                                         p = self.cnn_dropout_rates[0],                                 
                                          ) ) 
                 conv_layers.append ( 
@@ -250,10 +282,10 @@ class network(object):
                                         max_out = self.max_out,
                                         maxout_size = max_out_size,
                                         activation = self.cnn_activations[0],
-                                        W = None if init_params is None else init_params[param_counter],
-                                        b = None if init_params is None else init_params[param_counter + 1],
+                                        W = None if curr_init_weights is None else curr_init_weights,
+                                        b = None if curr_init_bias is None else curr_init_bias, 
                                         batch_norm = batch_norm_layer,
-                                        alpha = None if init_params is None else init_params[param_counter + 2],
+                                        alpha = None if curr_init_alpha is None else curr_init_alpha,
                                         p = self.cnn_dropout_rates[0]                             
                                          ) )
                 conv_layers.append ( 
@@ -289,8 +321,8 @@ class network(object):
     
     
             # Create the rest of the convolutional - pooling layers in a loop
-            param_counter = param_counter + 2      
-            if self.batch_norm is True:
+            param_counter = param_counter + 2  
+            if batch_norm_layer is True:
                 param_counter = param_counter + 1
             for layer in xrange(len(self.nkerns)-1):   
                 
@@ -298,6 +330,24 @@ class network(object):
                 pool_size = self.pooling_size[layer+1]
                 stride    = self.conv_stride_size[layer +1 ]
                 batch_norm_layer = self.batch_norm [layer + 1]
+                if retrain_params is not None:
+                    curr_copy = self.copy_from_old[layer + 1] 
+                    if curr_copy is True:
+                        curr_init_weights = init_params[param_counter]
+                        curr_init_bias    = init_params[param_counter + 1]
+                        if batch_norm_layer is True:
+                            curr_init_alpha = init_params[param_counter + 2]   
+                        else:
+                            curr_init_alpha = None
+                    else:
+                        curr_init_weights  = None
+                        curr_init_bias = None
+                        curr_init_alpha = None          
+                if init_params is None:
+                    curr_init_weights = None
+                    curr_init_bias = None
+                    curr_init_alpha = None
+                     
                 if self.max_out > 0:
                     max_out_size = self.cnn_maxout[layer+1]
                 else:
@@ -315,10 +365,10 @@ class network(object):
                                         max_out = self.max_out,
                                         maxout_size = max_out_size,
                                         activation = self.cnn_activations[layer+1],
-                                        W = None if init_params is None else init_params[param_counter    ] ,
-                                        b = None if init_params is None else init_params[param_counter + 1] ,
+                                        W = None if curr_init_weights is None else curr_init_weights ,
+                                        b = None if curr_init_bias is None else curr_init_bias ,
                                         batch_norm = batch_norm_layer,
-                                        alpha = None if init_params is None else init_params[param_counter + 2],
+                                        alpha = None if curr_init_alpha is None else curr_init_alpha ,
                                         p = self.cnn_dropout_rates[layer+1]                                                                                                        
                                          ) )
                                                  
@@ -359,7 +409,7 @@ class network(object):
                                         W = None if init_params is None else init_params[param_counter    ] ,
                                         b = None if init_params is None else init_params[param_counter + 1] ,
                                         batch_norm = batch_norm_layer,  
-                                        alpha = None if init_params is None else init_params[param_counter + 2],
+                                        alpha = None if curr_init_alpha is None else curr_init_alpha,
                                         p = self.cnn_dropout_rates[layer+1]                                                                                                       
                                          ) )                                                                                             
                     conv_layers.append ( 
@@ -391,8 +441,8 @@ class network(object):
                 self.weights.append ( conv_layers[-1].W )
                 activity.append( conv_layers[-1].output.dimshuffle(0,2,3,1) )
 
-                param_counter = param_counter + 2      
-                if self.batch_norm is True:
+                param_counter = param_counter + 2    
+                if batch_norm_layer is True:
                     param_counter = param_counter + 1           
         # Assemble fully connected laters
         if self.nkerns == []:
@@ -432,6 +482,7 @@ class network(object):
                          svm_flag = self.svm_flag,
                          batch_norm = self.mlp_batch_norm, 
                          params = [] if init_params is None else init_params[param_counter:],
+                         copy_from_old = self.copy_from_old [len(self.nkerns):] if init_params is not None else None,
                          verbose = verbose)
     
         # create theano functions for evaluating the graph
@@ -478,9 +529,7 @@ class network(object):
         self.params = []
         count = 0
         for layer in dropout_conv_layers:
-            self.params = self.params + layer.params
-            if self.batch_norm[count] is True:
-                self.params.append(layer.alpha)
+            self.params = self.params + layer.params            
         self.params = self.params + MLPlayers.params
        
         
