@@ -352,6 +352,7 @@ class MLP(object):
             maxout_rates,
             activations,
             copy_from_old,
+            freeze,
             use_bias=True,
             max_out=False,
             svm_flag = True,
@@ -538,8 +539,17 @@ class MLP(object):
 
         self.predicts_dropouts = self.layers[-1].y_pred
         self.predicts = self.layers[-1].y_pred
-        self.params = [ param for layer in self.dropout_layers for param in layer.params ]
-
+        
+        self.params = []
+        count = 0
+        for layer in self.dropout_layers:
+            if freeze[count] is False:
+                for param in layer.params:
+                    self.params.append (param)
+            elif verbose is True:
+                print "           -->        freezing post convolutional layer " + str(count + 1)          
+                                                            
+            count = count + 1
         if svm_flag is True:
             self.probabilities = self.layers[-1].output  
         else:

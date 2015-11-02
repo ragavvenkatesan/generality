@@ -159,11 +159,16 @@ class network(object):
         if retrain_params is not None:
             self.copy_from_old = retrain_params [ "copy_from_old" ]
             self.freeze_layers = retrain_params [ "freeze" ]
+        else:
+            self.freeze_layers = [] 
+            for i in xrange(len(self.nkerns) + len(self.num_nodes) + 1):
+                self.freeze_layers.append ( False )              
             
         # if no retrain specified but if init params are given, make default as copy all params.             
-        if retrain_params is None and init_params is not None:
-            for i in xrange(len(self.nkerns) + len(self.num_nodes) + 1):
-                self.copy_from_old[i] = True 
+            if init_params is not None:
+                self.copy_from_old = []
+                for i in xrange(len(self.nkerns) + len(self.num_nodes) + 1):
+                    self.copy_from_old.append ( True ) 
                                                       
         if self.ada_grad is True:
             assert self.rms_prop is False
@@ -471,6 +476,7 @@ class network(object):
         Srivastava, Nitish, et al. "Dropout: A simple way to prevent neural networks
         from overfitting." The Journal of Machine Learning Research 15.1 (2014): 1929-1958.
         """
+        
         MLPlayers = core.MLP( rng = self.rng,
                          input = (fully_connected_input, dropout_fully_connected_input),
                          layer_sizes = layer_sizes,
@@ -483,6 +489,7 @@ class network(object):
                          batch_norm = self.mlp_batch_norm, 
                          params = [] if init_params is None else init_params[param_counter:],
                          copy_from_old = self.copy_from_old [len(self.nkerns):] if init_params is not None else None,
+                         freeze = self.freeze_layers [ len(self.nkerns):],
                          verbose = verbose)
     
         # create theano functions for evaluating the graph
@@ -529,7 +536,11 @@ class network(object):
         self.params = []
         count = 0
         for layer in dropout_conv_layers:
-            self.params = self.params + layer.params            
+            if self.freeze_layers[count] is False:
+                self.params = self.params + layer.params
+            elif verbose is True:
+                print "           -->        convolutional layer " + str(count +  1) + " is frozen." 
+            count = count + 1 
         self.params = self.params + MLPlayers.params
        
         
@@ -835,8 +846,9 @@ class network(object):
         iteration= 0        
         start_time_main = time.clock()
         if os.path.isfile('dump.txt'):
-            os.remove('dump.txt')
-        f = open('dump.txt', 'w')
+            f = open('dump.txt', 'a')
+        else:
+            f = open('dump.txt', 'w')
         while (epoch_counter < (n_epochs + ft_epochs)) and (not early_termination):
             if epoch_counter == n_epochs:
                 print "... fine tuning"
@@ -983,10 +995,12 @@ class network(object):
             print ("...      -> total test accuracy : " + str(float((self.batch_size*self.batches2test)-wrong )*100
                                                          /(self.batch_size*self.batches2test)) + 
                          " % out of " + str(self.batch_size*self.batches2test) + " samples.")
-            f = open('dump.txt','w')
+            f = open('dump.txt','a')
+            
             f.write(("...      -> total test accuracy : " + str(float((self.batch_size*self.batches2test)-wrong )*100
                                                          /(self.batch_size*self.batches2test)) + 
                          " % out of " + str(self.batch_size*self.batches2test) + " samples."))
+            f.write('\n')                         
             f.close()
                         
         else:           
@@ -1004,10 +1018,11 @@ class network(object):
             print ("...      -> total test accuracy : " + str(float((self.batch_size*self.n_test_batches*self.batches2test)-wrong )*100/
                                                          (self.batch_size*self.n_test_batches*self.batches2test)) + 
                          " % out of " + str(self.batch_size*self.n_test_batches*self.batches2test) + " samples.")
-            f = open('dump.txt','w')
+            f = open('dump.txt','a')
             f.write(("...      -> total test accuracy : " + str(float((self.batch_size*self.n_test_batches*self.batches2test)-wrong )*100/
                                                          (self.batch_size*self.n_test_batches*self.batches2test)) + 
                          " % out of " + str(self.batch_size*self.n_test_batches*self.batches2test) + " samples."))
+            f.write('\n')                         
             f.close()
         correct = 0 
         confusion = numpy.zeros((self.outs,self.outs), dtype = int)
