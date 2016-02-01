@@ -1,4 +1,8 @@
 #!/usr/bin/python
+import sys
+sys.path.insert(0, '/Users/ragav/GitHub/Convolutional-Neural-Networks/')
+
+
 from samosa.build import network
 from samosa.core import ReLU, Sigmoid, Softmax, Tanh, Identity
 from samosa.util import load_network
@@ -69,6 +73,8 @@ def generality_experiment(
                                         
     retrain_net.init_data ( dataset = dataset , outs = arch_params ["outs"], verbose = verbose )      
 
+    arch_params_loaded["outs"] = arch_params["outs"] 
+    
     retrain_net.build_network (
                            arch_params = arch_params_loaded,
                            optimization_params = optimization_params,
@@ -99,21 +105,25 @@ if __name__ == '__main__':
         f.open ('dump.txt','a')
         
     f.write("... main net")
+
+    dataset = "_datasets/_dataset_41703"    
+    retrain_dataset = "_datasets/_dataset_39440"
+
     # run the base CNN as usual.              
     filename_params = { 
                         "results_file_name"     : "../results/results.txt",      
                         "error_file_name"       : "../results/error.txt",
                         "cost_file_name"        : "../results/cost.txt",
                         "confusion_file_name"   : "../results/confusion.txt",
-                        "network_save_name"     : "../results/network.pkl.gz "
+                        "network_save_name"     : "../saved_results/colon-colon/results/network.pkl.gz "
                     }
                     
     visual_params = {
                         "visualize_flag"        : True,
                         "visualize_after_epochs": 20,
-                        "n_visual_images"       : 81,
+                        "n_visual_images"       : 64,
                         "display_flag"          : False,
-                        "color_filter"          : False         
+                        "color_filter"          : True         
                     }   
                                                                                                                             
     optimization_params = {
@@ -141,15 +151,15 @@ if __name__ == '__main__':
                     "cnn_dropout"                       : True,
                     "mlp_dropout"                       : True,
                     "mlp_dropout_rates"                 : [ 0.5, 0.5 ],
-                    "num_nodes"                         : [ 1600 ],                                     
-                    "outs"                              : 10,                                                                                                                               
+                    "num_nodes"                         : [ 1024 ],                                     
+                    "outs"                              : 2,                                                                                                                               
                     "svm_flag"                          : False,                                       
                     "cnn_activations"                   : [ ReLU , ReLU,  ReLU, ReLU, ReLU ],             
                     "cnn_batch_norm"                    : [ True , True,  True, True, True],
                     "mlp_batch_norm"                    : True,
-                    "nkerns"                            : [     20  ,     20    , 50  ,   50   , 50],              
+                    "nkerns"                            : [     36  ,     36    , 64  ,   96   , 64],              
                     "filter_size"                       : [ ( 5, 5 ) , (5, 5 ), (5, 5), (5, 5) , (5, 5)],
-                    "pooling_size"                      : [ ( 1, 1 ) , (1, 1 ), (1, 1), (1, 1) , (2, 2)],
+                    "pooling_size"                      : [ ( 2, 2 ) , (2, 2 ), (2, 2), (1, 1), (1, 1) ],
                     "conv_stride_size"                  : [ ( 1, 1 ) , (1, 1 ), (1, 1), (1, 1) , (1, 1)],
                     "cnn_maxout"                        : [  1,         1 ,       1,     1 ,       1],                    
                     "mlp_maxout"                        : [  1    ],
@@ -159,17 +169,17 @@ if __name__ == '__main__':
                     "max_out"                           : 0 
 
                  }                          
-
-    # other loose parameters. 
-    n_epochs = 100
-    validate_after_epochs = 1
-    ft_epochs = 100
-    verbose = False 
     
+    # other loose parameters. 
+    n_epochs = 75
+    validate_after_epochs = 20
+    ft_epochs = 30
+    verbose = False 
+
     run_cnn(
                     arch_params             = arch_params,
                     optimization_params     = optimization_params,
-                    dataset                 = "_datasets/_dataset_39516", 
+                    dataset                 = dataset, 
                     filename_params         = filename_params,          
                     visual_params           = visual_params, 
                     validate_after_epochs   = validate_after_epochs,
@@ -179,14 +189,11 @@ if __name__ == '__main__':
                 )
                 
                 
-                
-                
-                
-                
+                                                               
                 
     # All frozen
-    retrain_dataset = "_datasets/_dataset_39516"
-    arch_params ["outs"]  = 10 
+      
+    arch_params ["outs"]  = 102
     
     print "... running all frozen"
     f.write("... running all frozen ")
@@ -203,7 +210,7 @@ if __name__ == '__main__':
                         "confusion_file_name"   : "../results/confusion_retrain_0.txt",
                         "network_save_name"     : "../results/network_retrain_0.pkl.gz "
                     }                    
-                                       
+                                      
     generality_experiment( 
                     arch_params             = arch_params,
                     optimization_params     = optimization_params,
@@ -218,7 +225,7 @@ if __name__ == '__main__':
                     verbose                 = verbose ,
                       )                       
                       
-                      
+                     
                       
     # one Unfrozen 
     f.write("... running one unfrozen ")
@@ -254,7 +261,7 @@ if __name__ == '__main__':
                       
                       
                       
-                      
+                     
     # two Unfrozen 
     print "... running two unfrozen"
     f.write("... running two unfrozen ")
@@ -309,7 +316,6 @@ if __name__ == '__main__':
                         "network_save_name"     : "../results/network_retrain_3.pkl.gz "
                     }                    
                     
-    arch_params ["outs"]  = 10                    
     generality_experiment( 
                     arch_params             = arch_params,
                     optimization_params     = optimization_params,
@@ -348,7 +354,7 @@ if __name__ == '__main__':
                         "network_save_name"     : "../results/network_retrain_4.pkl.gz "
                     }                    
                     
-    arch_params ["outs"]  = 10                    
+
     generality_experiment( 
                     arch_params             = arch_params,
                     optimization_params     = optimization_params,
@@ -387,8 +393,7 @@ if __name__ == '__main__':
                         "confusion_file_name"   : "../results/confusion_retrain_5.txt",
                         "network_save_name"     : "../results/network_retrain_5.pkl.gz "
                     }                    
-                    
-    arch_params ["outs"]  = 10                    
+                                     
     generality_experiment( 
                     arch_params             = arch_params,
                     optimization_params     = optimization_params,
@@ -424,8 +429,7 @@ if __name__ == '__main__':
                         "confusion_file_name"   : "../results/confusion_retrain_6.txt",
                         "network_save_name"     : "../results/network_retrain_6.pkl.gz "
                     }                    
-                    
-    arch_params ["outs"]  = 10                    
+                                 
     generality_experiment( 
                     arch_params             = arch_params,
                     optimization_params     = optimization_params,

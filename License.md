@@ -1,5 +1,4 @@
-Convolutional Neural Network: 
-Release: Samosa V 1.01.01 
+Cite paper: Neural Dataset Generality, by Ragav Venkatesan, Vijetha Gatupalli and Baoxin Li, if using this code.
 
 The MIT License (MIT)
 

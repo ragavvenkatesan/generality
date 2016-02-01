@@ -1,18 +1,7 @@
-Samosa:
-version 0.01.01 
- 
-* An even easier, simpler and versatile CNN alternative to [Lasagne](https://github.com/Lasagne/Lasagne).
-* Promotes easy learnability and practice of theano.
-* Modelling by just entries in the boilerplate.
+To run the code first download the Samosa Toolbox from my GitHub. Once the toolbox is downloaded, add the path to the code approrpiately.
+Use the samosa tool box dataset setup code to setup a base and a retrain dataset. To create a dataset such as the MNIST split, use the dataset_setup code in this repository. Once setup, initialize the dataset variables in the boilerplate of the init function and simply run.
 
 
-## Who is this code most useful for ?
-
-I wrote this code essentially for my labmates, those who are interested in starting deep CNNs to make a fast transition into theano. This will also be useful for industry when teting out prototypes.
-
-The [wiki](https://github.com/ragavvenkatesan/Convolutional-Neural-Networks/wiki) page has some rudimentary details on how to run the code and how to use it. I am working on a Sphinx Documentation, but until then, thats all I have. Contact me if you had trouble.
-
-Thanks for using the code, hope you had fun.
 
 Ragav Venkatesan
 
