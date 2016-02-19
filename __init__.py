@@ -3,8 +3,8 @@ import sys
 sys.path.insert(0, '/Users/ragav/GitHub/Convolutional-Neural-Networks/')
 
 
-from samosa.build import network
-from samosa.core import ReLU, Sigmoid, Softmax, Tanh, Identity
+from samosa.cnn import cnn_mlp
+from samosa.core import ReLU  
 from samosa.util import load_network
 from samosa.dataset import setup_dataset
 import os
@@ -23,26 +23,20 @@ def run_cnn(
                     verbose = False, 
            ):            
                
-    net = network(  filename_params = filename_params,
-                     random_seed = arch_params ["random_seed"],
-                     verbose = verbose )   
+    net = cnn_mlp(   filename_params = filename_params,
+                     arch_params = arch_params,
+                     optimization_params = optimization_params,
+                     retrain_params = None,
+                     init_params = None,
+                     verbose =verbose  )   
                
-    net.init_data ( dataset = dataset , outs = arch_params ["outs"], verbose = verbose )      
-    
-    net.build_network(   arch_params = arch_params,
-                         optimization_params = optimization_params,
-                         retrain_params = None,
-                         verbose = verbose)
-                         
-    net.create_dirs ( visual_params = visual_params )   
-                       
+    net.init_data ( dataset = dataset , outs = arch_params ["outs"], visual_params = visual_params, verbose = verbose )          
+    net.build_network(verbose = verbose)                         
     net.train( n_epochs = n_epochs, 
                 ft_epochs = ft_epochs,
                  validate_after_epochs = validate_after_epochs,
                  verbose = verbose )          
-    net.test( verbose = verbose )
-   
-                              
+    net.test( verbose = verbose )                      
     net.save_network ()   
      
 # this is for the generality experiments. This retrains by freezing and unfreezing layers diferenty.     
@@ -61,42 +55,31 @@ def generality_experiment(
 
                       ):         
                                                                                                      
-    params_loaded, arch_params_loaded = load_network (filename_params ["network_save_name"] ,
+    params_loaded, arch_params_loaded = load_network (original_filename_params ["network_save_name"] ,
                                         data_params = False, 
                                         optimization_params = False)   
  
     # retrain is used to do the dataset some wierd experiments.     
-    retrain_net = network( 
-                     filename_params = filename_params_retrain,
-                     random_seed = arch_params ["random_seed"],
-                     verbose = verbose )  
-                                        
-    retrain_net.init_data ( dataset = dataset , outs = arch_params ["outs"], verbose = verbose )      
-
-    arch_params_loaded["outs"] = arch_params["outs"] 
-    
-    retrain_net.build_network (
-                           arch_params = arch_params_loaded,
-                           optimization_params = optimization_params,
-                           init_params = params_loaded,
-                           retrain_params = retrain_params,
-                           verbose = verbose )    
-
-    retrain_net.create_dirs ( visual_params = visual_params )   
-                               
+    retrain_net = cnn_mlp(  filename_params = filename_params_retrain,
+                            arch_params = arch_params,
+                            optimization_params = optimization_params,
+                            retrain_params = retrain_params,
+                            init_params = params_loaded,
+                            verbose =verbose   )  
+                                                
+    retrain_net.init_data ( dataset = dataset , outs = arch_params ["outs"], visual_params = visual_params, verbose = verbose )      
+    retrain_net.build_network ( verbose = verbose )                           
     retrain_net.train ( n_epochs = n_epochs, 
                         ft_epochs = ft_epochs,
                          validate_after_epochs = validate_after_epochs,
-                         verbose = verbose)                                             
-    
-    retrain_net.test ( verbose = verbose )   
-    
+                         verbose = verbose)                                                 
+    retrain_net.test ( verbose = verbose )       
     retrain_net.save_network ()                       
                            
     
 ## Boiler Plate ## 
 if __name__ == '__main__':
-             
+    """         
     if os.path.isfile('dump.txt'):
         f = open('dump.txt', 'a')
     else:
@@ -105,7 +88,7 @@ if __name__ == '__main__':
         f.open ('dump.txt','a')
         
     f.write("... main net")
-
+    """
     dataset = "_datasets/_dataset_41703"    
     retrain_dataset = "_datasets/_dataset_39440"
 
@@ -166,14 +149,15 @@ if __name__ == '__main__':
                     "cnn_dropout_rates"                 : [ 0.5,        0.5     , 0.5 ,  0.5,   0.5   ],
                     "random_seed"                       : 23455, 
                     "mean_subtract"                     : False,
+                    "use_bias"                          : True,
                     "max_out"                           : 0 
 
                  }                          
     
     # other loose parameters. 
-    n_epochs = 75
-    validate_after_epochs = 20
-    ft_epochs = 30
+    n_epochs = 2
+    validate_after_epochs = 1
+    ft_epochs = 2
     verbose = False 
 
     run_cnn(
