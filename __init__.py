@@ -98,7 +98,7 @@ if __name__ == '__main__':
                         "error_file_name"       : "../results/error.txt",
                         "cost_file_name"        : "../results/cost.txt",
                         "confusion_file_name"   : "../results/confusion.txt",
-                        "network_save_name"     : "../saved_results/colon-colon/results/network.pkl.gz "
+                        "network_save_name"     : "../results/network.pkl.gz "
                     }
                     
     visual_params = {
@@ -110,21 +110,12 @@ if __name__ == '__main__':
                     }   
                                                                                                                             
     optimization_params = {
-                            "mom_start"                         : 0.5,                      
-                            "mom_end"                           : 0.85,
-                            "mom_interval"                      : 100,
-                            "mom_type"                          : 1,                         
-                            "initial_learning_rate"             : 0.01,
-			                "ft_learning_rate"                  : 0.0001,    
-                            "learning_rate_decay"               : 0.005,
-                            "l1_reg"                            : 0.000,                     
-                            "l2_reg"                            : 0.000,                    
-                            "ada_grad"                          : False,
-                            "rms_prop"                          : True,
-                            "rms_rho"                           : 0.9,                      
-                            "rms_epsilon"                       : 1e-7,                     
-                            "fudge_factor"                      : 1e-7,                    
-                            "objective"                         : 1,    
+                            "mom"                         	    : (0.5, 0.99, 100), # (mom_start, momentum_end, momentum_interval)                     
+                            "mom_type"                          : 1,                # 0-no mom, 1-polyak, 2-nestrov          
+                            "learning_rate"                     : (0.001,0.0001, 0.05 ),          # (initial_learning_rate, ft_learning_rate, annealing)
+                            "reg"                               : (0.000,0.000),    # l1_coeff, l2_coeff                                
+                            "optim_type"                        : 3,                # 0-SGD, 1-Adagrad, 2-RmsProp, 3-Adam
+                            "objective"                         : 1,                # 0-negative log likelihood, 1-categorical cross entropy, 2-binary cross entropy
                             }        
 
     arch_params = {
@@ -143,7 +134,8 @@ if __name__ == '__main__':
                     "nkerns"                            : [     36  ,     36    , 64  ,   96   , 64],              
                     "filter_size"                       : [ ( 5, 5 ) , (5, 5 ), (5, 5), (5, 5) , (5, 5)],
                     "pooling_size"                      : [ ( 2, 2 ) , (2, 2 ), (2, 2), (1, 1), (1, 1) ],
-                    "pooling_type"                      : [ 1,          1,      1,          1,      1  ],                    
+                    "pooling_type"                      : [ 1,          1,      1,          1,      1  ], 
+                    "maxrandpool_p"                     : [ 1,          1,      1,          1,      1  ],                                       
                     "conv_stride_size"                  : [ ( 1, 1 ) , (1, 1 ), (1, 1), (1, 1) , (1, 1)],
                     "cnn_maxout"                        : [  1,         1 ,       1,     1 ,       1],                    
                     "mlp_maxout"                        : [  1    ],
